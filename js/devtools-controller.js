@@ -96,8 +96,9 @@ function handleSliRequest(url, responseHeaders) {
 // --- LR Request Handling ---
 
 function handleLrRequest(url) {
+  const debugUrl = url + (url.includes('?') ? '&' : '?') + 'debug=inockf';
   $('.navbar-fixed-top .nav a[href="#profile_lr"]').removeClass('empty error').find('img').show();
-  chrome.runtime.sendMessage({ type: 'xhr', url: url }, function(response) {
+  chrome.runtime.sendMessage({ type: 'xhr', url: debugUrl }, function(response) {
     $('.navbar-fixed-top .nav a[href="#profile_lr"]').find('img').hide();
     if (response && response.success) {
       try {
