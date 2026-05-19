@@ -1,9 +1,0 @@
-{
-  "name": "website-stub",
-  "version": "1.0.0",
-  "description": "Frontend website starter template",
-  "license": "ISC",
-  "dependencies": {
-    "puppeteer": "^24.41.0"
-  }
-}
