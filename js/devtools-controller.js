@@ -99,30 +99,18 @@ chrome.devtools.network.onRequestFinished.addListener(function(request) {
   }
 });
 
-// Also process any SLI requests captured before DevTools was opened
-chrome.devtools.network.getHAR(function(harLog) {
-  if (!harLog || !harLog.entries || harLog.entries.length === 0) {
-    console.log("SLI: no HAR entries.");
-    return;
-  }
-
-  const found = {};
-  for (const entry of harLog.entries) {
-    const url = entry.request.url;
-    const responseHeaders = entry.response.headers || [];
-    if (isSliRequest(url, responseHeaders)) {
-      const page = getPageType(url);
-      found[page] = { url, headers: responseHeaders };
+// Load any SLI requests the background worker cached before DevTools was opened.
+chrome.runtime.sendMessage(
+  { type: 'getSliRequests', tabId: chrome.devtools.inspectedWindow.tabId },
+  function(cached) {
+    if (cached && Object.keys(cached).length > 0) {
+      console.log("SLI: loaded from background cache:", Object.keys(cached));
+      for (const [page, entry] of Object.entries(cached)) {
+        profilemanager[page] = entry;
+      }
+      profilemanager.update(cached);
+    } else {
+      console.log("SLI: no cached requests. Navigate to an SLI search page.");
     }
   }
-
-  if (Object.keys(found).length > 0) {
-    console.log("SLI: found requests in HAR:", Object.keys(found));
-    for (const [page, entry] of Object.entries(found)) {
-      profilemanager[page] = entry;
-    }
-    profilemanager.update(found);
-  } else {
-    console.log("SLI: no SLI requests in HAR. Navigate to an SLI search page.");
-  }
-});
+);

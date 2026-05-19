@@ -18,7 +18,9 @@
   "permissions": [
     "declarativeNetRequest",
     "tabs",
-    "cookies"
+    "cookies",
+    "webRequest",
+    "webNavigation"
   ],
   "host_permissions": [
     "http://*/",
