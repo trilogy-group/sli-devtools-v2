@@ -74,6 +74,7 @@ ProfileManager.prototype.summary_listsources = function(xmldoc, target, page, ur
 
       const machineName = $(this).siblings('machineName').text();
       const linkItems = [];
+      let relevanceUrl = null;
 
       $(this).find('sourceLastQuery').children().each(function() {
         let queryUrl = $(this).text().trim();
@@ -83,14 +84,24 @@ ProfileManager.prototype.summary_listsources = function(xmldoc, target, page, ur
         }
         const label = this.tagName.replace(/(.+)Query$/i, '$1');
         linkItems.push('<li><a href="' + queryUrl + '" target="_blank">' + queryUrl + '</a> <em>(' + label + ')</em></li>');
+
+        if (!relevanceUrl && queryUrl.includes('dorycgi')) {
+          relevanceUrl = queryUrl
+            .replace('/cgi-bin/dorycgi', '/assets/showquery.html')
+            .replace(':8001', ':8002');
+        }
       });
 
       // Skip sources with no query URLs
       if (!linkItems.length) return;
 
+      const relevanceLink = relevanceUrl
+        ? '<a class="relevance-link" href="' + relevanceUrl + '" target="_blank">Relevance info</a>'
+        : '';
+
       innerHtml +=
         '<div class="accordion-group">'
-        + '<div class="accordion-heading"><a class="accordion-toggle name">' + name + '</a></div>'
+        + '<div class="accordion-heading"><a class="accordion-toggle name">' + name + '</a>' + relevanceLink + '</div>'
         + '<div class="accordion-body collapse"><div class="accordion-inner"><ul>' + linkItems.join('') + '</ul></div></div>'
         + '</div>';
     });
