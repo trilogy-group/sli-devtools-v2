@@ -35,16 +35,19 @@ function isSliRequest(url, responseHeaders) {
   if (hasSliHeader) return true;
   try {
     const params = new URL(url).searchParams;
-    const ts = params.get('ts');
-    return params.has('sli_p') || ts === 'ajax' || ts === 'rac';
+    const ts  = params.get('ts')  || '';
+    const tsv = params.get('tsv') || '';
+    return params.has('sli_p')
+      || /^ajax/i.test(ts) || /^ajax/i.test(tsv)
+      || /^rac/i.test(ts)  || /^rac/i.test(tsv);
   } catch (e) {
     return false;
   }
 }
 
 function getPageType(url) {
-  if (/[?&]ts=ajax/i.test(url)) return 'ajax';
-  if (/[?&]ts=rac/i.test(url)) return 'rac';
+  if (/[?&]ts=ajax|[?&]tsv=ajax/i.test(url)) return 'ajax';
+  if (/[?&]ts=rac|[?&]tsv=rac/i.test(url))   return 'rac';
   return 'parent';
 }
 
