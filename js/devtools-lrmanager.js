@@ -46,8 +46,11 @@ LRManager.prototype = {
 
         // Add basic API info
         content.append(manager.createAccordianGroup("Basic-" + stratId, "Content-" + stratId, "Basic Info", manager.processBasics(parsedContent), true));
-        // Add info about the strategy rules
-        content.append(manager.createAccordianGroup("Rules-" + stratId, "Content-" + stratId, "Strategy Info", manager.processRules(parsedContent), false));
+        // Add info about the strategy rules (only when debug data is present)
+        var rulesContent = manager.processRules(parsedContent);
+        if (rulesContent) {
+            content.append(manager.createAccordianGroup("Rules-" + stratId, "Content-" + stratId, "Strategy Info", rulesContent, false));
+        }
         // Add product info
         if (parsedContent.results.length > 0) {
             content.append(manager.createAccordianGroup("Results-" + stratId, "Content-" + stratId, "Result Info", manager.processResults(parsedContent), false));

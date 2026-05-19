@@ -41,7 +41,16 @@ ProfileManager.prototype = {
   },
 
   addClickHandlers: function() {
-    $('body').on('click', '.accordion-toggle', function() {
+    // Remove Bootstrap's collapse handler after it registers (document.ready fires after script parsing).
+    $(function() { $('body').off('.collapse.data-api'); });
+
+    $('body').on('click', '.accordion-toggle', function(e) {
+      e.preventDefault();
+      if ($(this).attr('data-toggle') === 'collapse') {
+        const target = $(this).attr('data-target') || $(this).attr('href');
+        if (target) $(target).toggleClass('in');
+        return;
+      }
       $(this).closest('.accordion-group').find('.accordion-body').toggleClass('in');
     });
 

@@ -430,6 +430,51 @@ div.profile div.tab.cfwaf { padding: 12px; overflow-y: auto; }
 }
 .cfwaf-value { color: var(--text); word-break: break-all; }
 
+/* ── LR tab ─────────────────────────────────────────────── */
+#profile_lr { background: var(--bg); color: var(--text); }
+#profile_lr #lr_heading h1 { color: var(--text); }
+#profile_lr #lr_heading p  { color: var(--text-muted); }
+
+#profile_lr .accordion-group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+#profile_lr .accordion-heading {
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+}
+#profile_lr .accordion-heading .accordion-toggle {
+  color: var(--text);
+  padding: 8px 12px;
+  display: block;
+}
+#profile_lr .accordion-heading .accordion-toggle:hover { color: var(--primary); }
+#profile_lr .accordion-body { background: var(--surface); }
+#profile_lr .accordion-inner { padding: 8px; }
+
+#profile_lr .table {
+  color: var(--text);
+  border-color: var(--border);
+  margin-bottom: 8px;
+}
+#profile_lr .table td,
+#profile_lr .table th { border-color: var(--border) !important; }
+#profile_lr .table thead th { background: var(--surface-raised); color: var(--text-muted); }
+#profile_lr .table tbody tr { background: var(--surface); }
+#profile_lr .table tbody tr:nth-child(even) { background: var(--surface-inset); }
+#profile_lr .table tbody tr:hover { background: var(--primary-light); }
+
+#profile_lr .table tr.success,
+#profile_lr .table tr.success td { background: rgba(87,171,90,0.15); color: var(--text); }
+#profile_lr .table tr.warning,
+#profile_lr .table tr.warning td { background: rgba(227,179,65,0.15); color: var(--text); }
+
+#profile_lr .lr_hidden_row,
+#profile_lr .lr_hidden_row td { background: var(--surface-inset) !important; }
+#profile_lr pre { color: var(--text); background: var(--surface-inset); padding: 8px; border-radius: 4px; border: 1px solid var(--border); }
+
 /* ── Search highlight ───────────────────────────────────── */
 #main_list .searchterm { color: var(--error); }
 #summary ul, #results ul { padding: 0; margin: 0; list-style: none; }

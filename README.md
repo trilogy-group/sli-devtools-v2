@@ -79,6 +79,48 @@ Light and dark themes with a toggle button in the toolbar. The chosen theme pers
 
 ---
 
+## Making Changes
+
+### Workflow
+
+1. **Edit the source files** — JS, CSS, and HTML live directly in the repo root (no build step).
+
+2. **Reload the extension in Chrome**
+
+   Go to `chrome://extensions`, find **SLI Dev Tools**, and click the **↺ reload** button. You do not need to re-run Load Unpacked.
+
+3. **Reload the DevTools panel**
+
+   Close and reopen DevTools (`F12`), or right-click inside the SLI panel and choose **Reload frame**.
+
+4. **Commit and push**
+
+   ```bash
+   git add <changed files>
+   git commit -m "fix/feat: short description of what changed"
+   git push
+   ```
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `manifest.json` | Extension manifest (permissions, service worker, version) |
+| `js/background.js` | Service worker — request detection, caching, XHR proxy |
+| `js/devtools-controller.js` | DevTools panel bootstrap, network monitoring, routing |
+| `js/devtools-profilemanager.js` | XML profile parsing and tree rendering |
+| `js/devtools-summary-tab.js` | Summary tab — sources, tb.json lookup |
+| `js/devtools-lrmanager.js` | LR tab — JSONP parsing and rendering |
+| `js/devtools-resultinfo.js` | Result Info tab |
+| `css/debugger.css` | All panel styles (CSS custom properties for theming) |
+| `debugger.html` | DevTools panel HTML and Handlebars templates |
+
+### Bumping the version
+
+Update `"version"` in `manifest.json` and the heading in `README.md`.
+
+---
+
 ## v4.0.0 — Changes & Fixes
 
 This version is a near-complete rewrite to restore compatibility with **Chrome Manifest V3** and modernise the UI.
