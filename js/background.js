@@ -48,40 +48,77 @@ function getPageType(url) {
   return 'parent';
 }
 
-// --- Per-tab SLI request cache ---
-// Stores the most recent SLI request seen per page type, keyed by tabId.
-const sliCache = {};
+// --- Per-tab SLI request cache (persisted via chrome.storage.session) ---
+// chrome.storage.session survives service worker suspension within a browser session.
+
+function cacheKey(tabId) {
+  return 'sli_tab_' + tabId;
+}
+
+function getCachedRequests(tabId, callback) {
+  const key = cacheKey(tabId);
+  chrome.storage.session.get(key, function(result) {
+    if (chrome.runtime.lastError) {
+      console.warn('SLI bg: storage.session.get error:', chrome.runtime.lastError.message);
+      callback({});
+      return;
+    }
+    console.log('SLI bg: storage.session.get key=' + key, result[key] || {});
+    callback(result[key] || {});
+  });
+}
+
+function setCachedRequest(tabId, page, entry) {
+  getCachedRequests(tabId, function(current) {
+    current[page] = entry;
+    const update = {};
+    update[cacheKey(tabId)] = current;
+    chrome.storage.session.set(update, function() {
+      if (chrome.runtime.lastError) {
+        console.warn('SLI bg: storage.session.set error:', chrome.runtime.lastError.message);
+      } else {
+        console.log('SLI bg: stored', page, 'for tab', tabId);
+      }
+    });
+  });
+}
+
+function clearCachedRequests(tabId) {
+  chrome.storage.session.remove(cacheKey(tabId), function() {
+    console.log('SLI bg: cleared cache for tab', tabId);
+  });
+}
 
 chrome.webRequest.onCompleted.addListener(
   function(details) {
     if (!isSliRequest(details.url, details.responseHeaders)) return;
     const page = getPageType(details.url);
-    if (!sliCache[details.tabId]) sliCache[details.tabId] = {};
-    sliCache[details.tabId][page] = { url: details.url, headers: details.responseHeaders || [] };
+    setCachedRequest(details.tabId, page, { url: details.url, headers: details.responseHeaders || [] });
     console.log('SLI bg: cached', page, 'for tab', details.tabId, details.url);
   },
   { urls: ['<all_urls>'] },
   ['responseHeaders']
 );
 
-// Clear cache when the tab navigates to a new page.
-chrome.webNavigation.onCommitted.addListener(function(details) {
-  if (details.frameId === 0 && sliCache[details.tabId]) {
-    delete sliCache[details.tabId];
-  }
+// Clear cache before a new top-level navigation so the new page's
+// SLI requests populate fresh (onBeforeNavigate fires before any requests go out).
+chrome.webNavigation.onBeforeNavigate.addListener(function(details) {
+  if (details.frameId === 0) clearCachedRequests(details.tabId);
 });
 
 // Clean up when a tab is closed.
 chrome.tabs.onRemoved.addListener(tabId => {
-  delete sliCache[tabId];
+  clearCachedRequests(tabId);
 });
 
 // --- Message handlers ---
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'getSliRequests') {
-    sendResponse(sliCache[message.tabId] || {});
-    return false;
+    getCachedRequests(message.tabId, function(cached) {
+      sendResponse(cached);
+    });
+    return true; // async response
   }
 
   if (message.type === 'xhr' && message.url) {

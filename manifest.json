@@ -20,7 +20,8 @@
     "tabs",
     "cookies",
     "webRequest",
-    "webNavigation"
+    "webNavigation",
+    "storage"
   ],
   "host_permissions": [
     "http://*/",

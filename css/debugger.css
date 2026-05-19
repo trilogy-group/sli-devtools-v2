@@ -393,6 +393,43 @@ div.tab.summary .test span.error {
 }
 #theme-toggle:hover { color: var(--primary); border-color: var(--primary); }
 
+/* ── CF + WAF tab ───────────────────────────────────────── */
+div.profile div.tab.cfwaf { padding: 12px; overflow-y: auto; }
+
+.cfwaf-empty { color: var(--text-muted); font-style: italic; }
+
+.cfwaf-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 16px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.cfwaf-section-title:first-child { margin-top: 0; }
+
+.cfwaf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.cfwaf-table tr:nth-child(even) { background: var(--surface-inset); }
+.cfwaf-table tr:hover { background: var(--primary-light); }
+.cfwaf-table td {
+  padding: 4px 8px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+.cfwaf-name {
+  white-space: nowrap;
+  color: var(--text-muted);
+  width: 1%;
+  padding-right: 16px;
+}
+.cfwaf-value { color: var(--text); word-break: break-all; }
+
 /* ── Search highlight ───────────────────────────────────── */
 #main_list .searchterm { color: var(--error); }
 #summary ul, #results ul { padding: 0; margin: 0; list-style: none; }

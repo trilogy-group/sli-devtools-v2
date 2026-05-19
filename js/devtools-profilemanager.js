@@ -160,6 +160,7 @@ ProfileManager.prototype = {
     this.parseResults(xmldoc, target);
     this.parseStatus(xmldoc, target);
     this.parseTimings(xmldoc, target);
+    this.parseCFWAF(xmldoc, target);
   },
 
   // --- Timing tab ---
@@ -300,6 +301,51 @@ ProfileManager.prototype = {
     }
 
     return html + '</li>';
+  },
+
+  // --- CF + WAF tab ---
+
+  parseCFWAF: function(xmldoc, target) {
+    const headers = [];
+    $(xmldoc).find('data input element').each(function() {
+      const name = $(this).attr('name') || '';
+      if (!/^HEADER_/i.test(name)) return;
+      headers.push({
+        name:  name.replace(/^HEADER_/i, ''),
+        value: $(this).attr('value') || ''
+      });
+    });
+
+    const $content = $(target + ' .cfwaf .cfwaf-content');
+
+    if (!headers.length) {
+      $content.html('<p class="cfwaf-empty">No request headers found in profile.</p>');
+      return;
+    }
+
+    const isCF  = h => /cloudfront|^cf-/i.test(h.name);
+    const isWAF = h => /x-amzn-waf|x-amz-waf/i.test(h.name);
+    const cf    = headers.filter(h => isCF(h) || isWAF(h));
+    const other = headers.filter(h => !isCF(h) && !isWAF(h));
+
+    function renderTable(rows) {
+      return '<table class="cfwaf-table"><tbody>'
+        + rows.sort((a, b) => a.name.localeCompare(b.name)).map(function(h) {
+            return '<tr><td class="cfwaf-name">' + h.name + '</td>'
+              + '<td class="cfwaf-value">' + h.value + '</td></tr>';
+          }).join('')
+        + '</tbody></table>';
+    }
+
+    let html = '';
+    if (cf.length) {
+      html += '<h4 class="cfwaf-section-title">CloudFront &amp; WAF</h4>' + renderTable(cf);
+    }
+    if (other.length) {
+      html += '<h4 class="cfwaf-section-title">Other Headers</h4>' + renderTable(other);
+    }
+
+    $content.html(html);
   },
 
   // --- Results tab ---
