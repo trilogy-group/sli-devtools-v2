@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <head>
+        <meta charset="utf-8">
+        <title>SLI Search Debugger</title>
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <!-- Le styles -->
+        <link href="bootstrap/css/bootstrap.css" rel="stylesheet">
+        <link href="css/debugger.css" rel="stylesheet">
+    </head>
+    
+    <body>
+        <div id="version" style="display:none;">
+            <a class="download_url" href="" title="download extension">
+                <h2>NEW VERSION AVAILABLE</h2>
+            </a>
+            <p>Version (
+                <span class="version"></span>) is available. Please save the CRX file below onto your desktop, then drag it onto the chrome extensions page (chrome://extensions) to install it / update it.</p>
+        </div>
+        <div id="header" class="navbar navbar-fixed-top">
+            <div class="navbar-inner">
+                <div>
+                    <div class="nav-collapse">
+                        <ul class="nav">
+                            <li class="active">
+                                <a class='empty' href="#profile_parent">Parent
+                                    <img src="img/loader.gif">
+                                </a>
+                            </li>
+                            <li>
+                                <a class='empty' href="#profile_ajax">Ajax
+                                    <img src="img/loader.gif">
+                                </a>
+                            </li>
+                            <li>
+                                <a class='empty' href="#profile_rac">RAC
+                                    <img src="img/loader.gif">
+                                </a>
+                            </li>
+                            <li>
+                                <a class='empty' href="#results">Result Info
+                                    <img src="img/loader.gif">
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <!--/.nav-collapse -->
+                </div>
+            </div>
+        </div>
+        <div id="main">
+            <section id="content">
+                <div id="notifications" class="alert alert-error">
+                    <div id="notifications_msg"></div>
+                </div>
+                <div class='page profile active' id="profile_parent">
+                    <header>
+                        <div>
+                            <ul class="nav nav-pills">
+                                <li class="active">
+                                    <a href="#profile_parent-summary">Summary</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_parent-status">Status</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_parent-input">Input</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_parent-output">Output</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_parent-results">Results</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_parent-timing">Timing</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div style="display:none">
+                            <input type="text" onkeypress="" onchange="javascript: searchXML(this);" onfocus="if(this.value='search here') this.value=''; clearSearch();" value="search here" />
+                        </div>
+                        <div style="display:none">
+                            <div class="btn-group">
+                                <button id="profile-expand-all" class="btn">expand all</button>
+                                <button id="profile-collapse-all" class="btn">collapse all</button>
+                            </div>
+                        </div>
+                    </header>
+                    <div class="tab-container">
+                        <div class="summary active tab">
+                            <div class="sources tab-container">
+                                <div class="accordion" id="accordion-parent">
+                                    <div class="accordion-group searchrequest">
+                                        <div class="accordion-heading">
+                                            <a class="accordion-toggle name" data-toggle="collapse" data-parent="#accordion-parent" href="#collapseSearchRequest">SEARCH REQUEST</a>
+                                            <a class="link" target="_blank" href=""></a>
+                                        </div>
+                                        <div id="collapseSearchRequest" class="in" style="">
+                                            <div class="accordion-inner">
+                                                <ul></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-group details">
+                                        <div class="accordion-heading">
+                                            <a class="accordion-toggle name" data-toggle="collapse" data-parent="#accordion-parent" href="#collapseDetails">DETAILS</a>
+                                        </div>
+                                        <div id="collapseDetails" class="in" style="">
+                                            <div class="accordion-inner">
+                                                <ul></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-group tests">
+                                        <div class="accordion-heading">
+                                            <a class="accordion-toggle name" data-toggle="collapse" data-parent="#accordion-parent" href="#collapseTests">CHECKS</a>
+                                        </div>
+                                        <div id="collapseTests" class="in" style="">
+                                            <div class="accordion-inner">
+                                                <ul class="params"></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-group links">
+                                        <div class="accordion-heading">
+                                            <a class="accordion-toggle name" data-toggle="collapse" data-parent="#accordion-parent" href="#collapseLinks">LINKS</a>
+                                        </div>
+                                        <div id="collapseLinks" class="in" style="">
+                                            <div class="accordion-inner">
+                                                <div id="links"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="status tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="input tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="output tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="results tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="timing tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class='page profile' id="profile_ajax">
+                    <header>
+                        <div>
+                            <ul class="nav nav-pills">
+                                <li class="active">
+                                    <a href="#profile_ajax-summary">Summary</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_ajax-status">Status</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_ajax-input">Input</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_ajax-output">Output</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_ajax-results">Results</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_ajax-timing">Timing</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div style="display:none">
+                            <input type="text" onkeypress="" onchange="javascript: searchXML(this);" onfocus="if(this.value='search here') this.value=''; clearSearch();" value="search here" />
+                        </div>
+                        <div style="display:none">
+                            <div class="btn-group">
+                                <button id="profile-expand-all" class="btn">expand all</button>
+                                <button id="profile-collapse-all" class="btn">collapse all</button>
+                            </div>
+                        </div>
+                    </header>
+                    <div class="tab-container">
+                        <div class="summary tab active">
+                            <div class="sources tab-container">
+                                <div class="accordion" id="accordion-ajax">
+                                    <div class="accordion-group searchrequest">
+                                        <div class="accordion-heading">
+                                            <a class="accordion-toggle name" data-toggle="collapse" data-parent="#accordion-ajax" href="#collapseAjaxSearchRequest">SEARCH REQUEST</a>
+                                            <a class="link" target="_blank" href=""></a>
+                                        </div>
+                                        <div id="collapseAjaxSearchRequest" class="in" style="">
+                                            <div class="accordion-inner">
+                                                <ul></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-group details">
+                                        <div class="accordion-heading">
+                                            <a class="accordion-toggle name" data-toggle="collapse" data-parent="#accordion-ajax" href="#collapseAjaxDetails">DETAILS</a>
+                                        </div>
+                                        <div id="collapseAjaxDetails" class="in" style="">
+                                            <div class="accordion-inner">
+                                                <ul></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-group tests">
+                                        <div class="accordion-heading">
+                                            <a class="accordion-toggle name" data-toggle="collapse" data-parent="#accordion-ajax" href="#collapseAjaxTests">CHECKS</a>
+                                        </div>
+                                        <div id="collapseAjaxTests" class="in" style="">
+                                            <div class="accordion-inner">
+                                                <ul class="params"></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="status tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="input tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="output tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="results tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="timing tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class='page profile' id="profile_rac">
+                    <header>
+                        <div>
+                            <ul class="nav nav-pills">
+                                <li class="active">
+                                    <a href="#profile_rac-summary">Summary</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_rac-status">Status</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_rac-input">Input</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_rac-output">Output</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_rac-results">Results</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_rac-timing">Timing</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div style="display:none">
+                            <input type="text" onkeypress="" onchange="javascript: searchXML(this);" onfocus="if(this.value='search here') this.value=''; clearSearch();" value="search here" />
+                        </div>
+                        <div style="display:none">
+                            <div class="btn-group">
+                                <button id="profile-expand-all" class="btn">expand all</button>
+                                <button id="profile-collapse-all" class="btn">collapse all</button>
+                            </div>
+                        </div>
+                    </header>
+                    <div class="tab-container">
+                        <div class="summary tab active">
+                            <div class="sources tab-container">
+                                <div class="accordion" id="accordion-rac">
+                                    <div class="accordion-group searchrequest">
+                                        <div class="accordion-heading">
+                                            <a class="accordion-toggle name" data-toggle="collapse" data-parent="#accordion-rac" href="#collapseRacSearchRequest">SEARCH REQUEST</a>
+                                            <a class="link" target="_blank" href=""></a>
+                                        </div>
+                                        <div id="collapseRacSearchRequest" class="in" style="">
+                                            <div class="accordion-inner">
+                                                <ul></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-group details">
+                                        <div class="accordion-heading">
+                                            <a class="accordion-toggle name" data-toggle="collapse" data-parent="#accordion-rac" href="#collapseRacDetails">DETAILS</a>
+                                        </div>
+                                        <div id="collapseRacDetails" class="in" style="">
+                                            <div class="accordion-inner">
+                                                <ul></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-group tests">
+                                        <div class="accordion-heading">
+                                            <a class="accordion-toggle name" data-toggle="collapse" data-parent="#accordion-rac" href="#collapseRacTests">CHECKS</a>
+                                        </div>
+                                        <div id="collapseRacTests" class="in" style="">
+                                            <div class="accordion-inner">
+                                                <ul class="params"></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="status tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="input tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="output tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="results tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="timing tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class='page' id="results">
+                    <div class="tab-container">
+                        <div class="accordion" id="accordion2"></div>
+                        <footer>Result information from last
+                            <span></span>request.</footer>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <!-- Le Templates===================================================-->
+	<script id="resultinfo-template" type="text/x-handlebars-template">
+	    <div class="accordion-heading">
+	        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+	          <div class="rank"><span></span></div><div class="title"><span></span></div>
+	        </a>
+	    </div>
+	    <div id="collapseOne" class="accordion-body collapse" style="height: 0px; ">
+	      <div class="accordion-inner">
+	      	<h4>Data</h4>
+	      	<ul class="resultdata"></ul>
+	      	<h4>Facets</h4>
+	       	<ul class="facetdata">
+	       	<li class="header-row"><div><span>order</span><span>id</span><span>value</span><span>count</span><span>sort</span><span>label</span></div></li>
+	       	</ul>
+	      </div>
+	    </div>
+	</script>
+
+	<script id="source-template" type="text/x-handlebars-template">
+	    <div class="accordion-heading">
+			<a class="accordion-toggle name" data-toggle="collapse" data-parent="#accordion1" href="#collapseOne"></a>
+	    	<a class="link" target="_blank"></a>
+	    </div>
+	    <div id="collapseOne" class="accordion-body collapse" style="height: 0px; ">
+	      <div class="accordion-inner">
+	      	<ul class="params">
+	       	</ul>
+	      </div>
+	    </div>
+	</script>
+
+    <!-- Le javascript ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+        <script type="text/javascript" src="bootstrap/js/bootstrap.js"></script>
+        <script type="text/javascript" src="js/devtools-profilemanager.js"></script>
+        <script type="text/javascript" src="js/devtools-summary-tab.js"></script>
+        <script type="text/javascript" src="js/devtools-resultinfo.js"></script>
+        <script type="text/javascript" src="js/devtools-controller.js"></script>
+    </body>
+
+</html>

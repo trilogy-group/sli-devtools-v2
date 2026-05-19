@@ -1,0 +1,27 @@
+{
+	"manifest_version":2,
+	"name": "SLI Dev Tools",
+	"update_url": "http://tools.sli-systems.com/sli_systems/chromeextensions/sli_devtools/updates.xml",
+	"version": "2.2",
+	"description": "Devtools extension for working on SLI Clients",
+	"background": { "scripts" : ["js/jquery-1.7.2.min.js", "js/background.js"] },
+	"devtools_page" : "devtools.html",
+	"omnibox": {
+		"keyword": "sli_devtools"
+	},
+	"icons": { 
+		"128": "img/icon-128.png", 
+		"16": "img/icon-16.png" 
+	},
+	"permissions": [
+		"experimental",
+		"webRequest",
+		"webRequestBlocking",
+		"cookies",
+		"tabs",
+		"http://*/",
+		"https://*/",
+		"http://*/*", 
+		"https://*/*"
+	]
+}

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <head>
+        <meta charset="utf-8">
+        <title>SLI Search Debugger</title>
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <!-- Le styles -->
+        <link href="bootstrap/css/bootstrap.css" rel="stylesheet">
+        <link href="css/debugger.css" rel="stylesheet">
+        <script src="js/theme-init.js"></script>
+    </head>
+    
+    <body>
+        <div id="version" style="display:none;">
+            <a class="download_url" href="" title="download extension">
+                <h2>NEW VERSION AVAILABLE</h2>
+            </a>
+            <p>Version (
+                <span class="version"></span>) is available. Please save the CRX file below onto your desktop, then drag it onto the chrome extensions page (chrome://extensions) to install it / update it.</p>
+        </div>
+        <div id="header" class="navbar navbar-fixed-top">
+            <div class="navbar-inner">
+                <div>
+                    <button id="theme-toggle" title="Toggle light/dark theme">☀</button>
+                    <div class="nav-collapse">
+                        <ul class="nav">
+                            <li class="active">
+                                <a class='empty' href="#profile_parent">Parent
+                                    <img src="img/loader.gif">
+                                </a>
+                            </li>
+                            <li>
+                                <a class='empty' href="#profile_ajax">Ajax
+                                    <img src="img/loader.gif">
+                                </a>
+                            </li>
+                            <li>
+                                <a class='empty' href="#profile_rac">RAC
+                                    <img src="img/loader.gif">
+                                </a>
+                            </li>
+                            <li>
+                                <a class='empty' href="#results">Result Info
+                                    <img src="img/loader.gif">
+                                </a>
+                            </li>
+                            <li>
+                                <a class='empty' href="#profile_lr">LR
+                                    <img src="img/loader.gif">
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <!--/.nav-collapse -->
+                </div>
+            </div>
+        </div>
+        <div id="main">
+            <section id="content">
+                <div id="notifications" class="alert alert-error">
+                    <div id="notifications_msg"></div>
+                </div>
+                <div class='page profile active' id="profile_parent">
+                    <header>
+                        <div>
+                            <ul class="nav nav-pills">
+                                <li class="active">
+                                    <a href="#profile_parent-summary">Summary</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_parent-status">Status</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_parent-input">Input</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_parent-output">Output</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_parent-results">Results</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_parent-timing">Timing</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </header>
+                    <div class="tab-container">
+                        <div class="summary active tab">
+                            <div class="sources tab-container">
+                                <div class="accordion" id="accordion-parent">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="status tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="input tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="output tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="results tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="timing tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class='page profile' id="profile_ajax">
+                    <header>
+                        <div>
+                            <ul class="nav nav-pills">
+                                <li class="active">
+                                    <a href="#profile_ajax-summary">Summary</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_ajax-status">Status</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_ajax-input">Input</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_ajax-output">Output</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_ajax-results">Results</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_ajax-timing">Timing</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </header>
+                    <div class="tab-container">
+                        <div class="summary tab active">
+                            <div class="sources tab-container">
+                                <div class="accordion" id="accordion-ajax">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="status tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="input tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="output tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="results tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="timing tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class='page profile' id="profile_rac">
+                    <header>
+                        <div>
+                            <ul class="nav nav-pills">
+                                <li class="active">
+                                    <a href="#profile_rac-summary">Summary</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_rac-status">Status</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_rac-input">Input</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_rac-output">Output</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_rac-results">Results</a>
+                                </li>
+                                <li>
+                                    <a href="#profile_rac-timing">Timing</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div style="display:none">
+                        </div>
+                    </header>
+                    <div class="tab-container">
+                        <div class="summary tab active">
+                            <div class="sources tab-container">
+                                <div class="accordion" id="accordion-rac">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="status tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="input tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="output tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="results tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                        <div class="timing tab">
+                            <div class="contents title"></div>
+                            <div class="contents">
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class='page' id="results">
+                    <div class="tab-container">
+                        <div class="accordion" id="accordion2"></div>
+                        <footer>Result information from last
+                            <span></span>request.</footer>
+                    </div>
+                </div>
+                <!-- LR html -->
+                <div class='page' id="profile_lr">
+                    <div class="tab-container">
+                        <div id="lr_heading">
+                            <h1>LR Debugger</h1>
+                            <p>You may need to refresh the page for the information to populate.</p>
+                        </div>
+                        <div id="lr_content"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <!-- Le Templates===================================================-->
+	<script id="resultinfo-template" type="text/x-handlebars-template">
+	    <div class="accordion-heading">
+	        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+	          <div class="rank"><span></span></div><div class="title"><span></span></div>
+	        </a>
+	    </div>
+	    <div id="collapseOne" class="accordion-body collapse" style="height: 0px; ">
+	      <div class="accordion-inner">
+	      	<h4>Data</h4>
+	      	<ul class="resultdata"></ul>
+	      	<h4>Facets</h4>
+	       	<ul class="facetdata">
+	       	<li class="header-row"><div><span>order</span><span>id</span><span>value</span><span>count</span><span>sort</span><span>label</span></div></li>
+	       	</ul>
+	      </div>
+	    </div>
+	</script>
+
+	<script id="source-template" type="text/x-handlebars-template">
+	    <div class="accordion-heading">
+			<a class="accordion-toggle name" data-toggle="collapse" data-parent="#accordion1" href="#collapseOne"></a>
+	    	<a class="link" target="_blank"></a>
+	    </div>
+	    <div id="collapseOne" class="accordion-body collapse" style="height: 0px; ">
+	      <div class="accordion-inner">
+	      	<ul class="params">
+	       	</ul>
+	      </div>
+	    </div>
+	</script>
+        
+    <script id="lr-accordian-group-template" type="text/x-handlebars-template">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="" href=""></a>
+            </div>
+            <div id="" class="accordion-body collapse">
+                <div class="accordion-inner"></div>
+            </div>
+        </div>
+    </script>
+
+    <script id="lr-table-template" type="text/x-handlebars-template">
+        <table class='table table-bordered'>
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+    </script>
+
+    <!-- Le javascript ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+        <script type="text/javascript" src="bootstrap/js/bootstrap.js"></script>
+        <script type="text/javascript" src="js/devtools-profilemanager.js"></script>
+        <script type="text/javascript" src="js/devtools-lrmanager.js"></script>
+        <script type="text/javascript" src="js/devtools-summary-tab.js"></script>
+        <script type="text/javascript" src="js/devtools-resultinfo.js"></script>
+        <script type="text/javascript" src="js/devtools-controller.js"></script>
+    </body>
+
+</html>
