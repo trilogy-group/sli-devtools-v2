@@ -1,2 +1,15 @@
 node_modules/
 temporary screenshots/
+sli_debugger/
+.claude/
+SKILL.md
+CLAUDE.md
+index.html
+serve.mjs
+screenshot.mjs
+package.json
+package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db

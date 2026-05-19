@@ -199,11 +199,11 @@ ProfileManager.prototype.summary_checkdynamictemplates = function(xmldoc, target
       return;
     }
 
-    // location may be a plain string or an object keyed by collection
+    // location may be a plain string or an object keyed by collection (lbc)
     let location = src.location;
-    console.log('SLI DT: raw location:', location, '| coll:', coll);
+    console.log('SLI DT: raw location:', location, '| lbc:', lbc, '| coll:', coll);
     if (location && typeof location === 'object') {
-      location = (coll && location[coll]) || Object.values(location)[0] || null;
+      location = (lbc && location[lbc]) || (coll && location[coll]) || Object.values(location)[0] || null;
       console.log('SLI DT: resolved location from object:', location);
     }
 
@@ -246,19 +246,36 @@ ProfileManager.prototype._getTbJsonUrl = function(machine, cgiUrl, lbc) {
     };
   }
 
-  if (!lbc) return null;
+  // Derive client name from the CGI URL.
+  // On SLI-hosted demo domains (resultsdemo.com) the subdomain is {clientname}-{lbc},
+  // so strip the -lbc suffix. e.g. qantasagents-asia.resultsdemo.com + lbc=asia → qantasagents.
+  // On client-owned domains the lbc value itself is the client name (e.g. lbc=scorptec).
+  let clientName = lbc || null;
+  try {
+    const hostname = new URL(cgiUrl).hostname;
+    if (/resultsdemo\.com$/i.test(hostname)) {
+      const subdomain = hostname.split('.')[0];
+      if (lbc && subdomain.toLowerCase().endsWith('-' + lbc.toLowerCase())) {
+        clientName = subdomain.slice(0, -(lbc.length + 1));
+      } else {
+        clientName = subdomain;
+      }
+    }
+  } catch (e) {}
+
+  if (!clientName) return null;
 
   // Demo: machine name contains "demo"
   if (/\.demo\./i.test(machine) || /demo/i.test(machine)) {
     return {
       env: 'demo',
-      url: 'https://tb1.sli-systems.com/client-files/files/' + lbc + '/environment/demo/conf/tb.json'
+      url: 'https://tb1.sli-systems.com/client-files/files/' + clientName + '/environment/demo/conf/tb.json'
     };
   }
 
   // Prod (default)
   return {
     env: 'prod',
-    url: 'https://tb1.sli-systems.com/client-files/files/' + lbc + '/environment/prod/conf/tb.json'
+    url: 'https://tb1.sli-systems.com/client-files/files/' + clientName + '/environment/prod/conf/tb.json'
   };
 };
