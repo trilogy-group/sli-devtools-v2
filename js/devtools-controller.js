@@ -81,6 +81,10 @@ function getPageType(url) {
   return 'parent';
 }
 
+function isLrRequest(url) {
+  return /\.sli-r\.com\//i.test(url);
+}
+
 function handleSliRequest(url, responseHeaders) {
   const page = getPageType(url);
   profilemanager[page] = { url, headers: responseHeaders || [] };
@@ -89,12 +93,36 @@ function handleSliRequest(url, responseHeaders) {
   profilemanager.update(data);
 }
 
+// --- LR Request Handling ---
+
+function handleLrRequest(url) {
+  $('.navbar-fixed-top .nav a[href="#profile_lr"]').removeClass('empty error').find('img').show();
+  chrome.runtime.sendMessage({ type: 'xhr', url: url }, function(response) {
+    $('.navbar-fixed-top .nav a[href="#profile_lr"]').find('img').hide();
+    if (response && response.success) {
+      try {
+        lrManager.processLRRequest(response.data);
+      } catch (e) {
+        console.warn('SLI: LR parse error:', e, url);
+      }
+    } else {
+      console.warn('SLI: LR fetch failed:', url, response);
+    }
+  });
+}
+
 // --- Network Monitoring ---
 
-// Detect SLI requests in real time as they complete
+// Detect SLI and LR requests in real time as they complete
 chrome.devtools.network.onRequestFinished.addListener(function(request) {
   const url = request.request.url;
   const responseHeaders = request.response.headers || [];
+
+  if (isLrRequest(url)) {
+    console.log("SLI: LR request detected:", url);
+    handleLrRequest(url);
+    return;
+  }
 
   if (isSliRequest(url, responseHeaders)) {
     console.log("SLI: request detected:", url);
@@ -102,18 +130,33 @@ chrome.devtools.network.onRequestFinished.addListener(function(request) {
   }
 });
 
-// Load any SLI requests the background worker cached before DevTools was opened.
+// Load any SLI/LR requests the background worker cached before DevTools was opened.
 chrome.runtime.sendMessage(
   { type: 'getSliRequests', tabId: chrome.devtools.inspectedWindow.tabId },
   function(cached) {
-    if (cached && Object.keys(cached).length > 0) {
-      console.log("SLI: loaded from background cache:", Object.keys(cached));
-      for (const [page, entry] of Object.entries(cached)) {
-        profilemanager[page] = entry;
-      }
-      profilemanager.update(cached);
-    } else {
+    if (!cached || Object.keys(cached).length === 0) {
       console.log("SLI: no cached requests. Navigate to an SLI search page.");
+      return;
+    }
+
+    console.log("SLI: loaded from background cache:", Object.keys(cached));
+
+    // Load LR requests
+    if (cached.lr && cached.lr.length > 0) {
+      lrManager.resetLR();
+      cached.lr.forEach(function(url) { handleLrRequest(url); });
+    }
+
+    // Load profile requests (parent/ajax/rac)
+    const profileData = {};
+    ['parent', 'ajax', 'rac'].forEach(function(page) {
+      if (cached[page]) {
+        profilemanager[page] = cached[page];
+        profileData[page] = cached[page];
+      }
+    });
+    if (Object.keys(profileData).length > 0) {
+      profilemanager.update(profileData);
     }
   }
 );

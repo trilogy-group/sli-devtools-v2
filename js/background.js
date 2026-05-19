@@ -27,6 +27,10 @@ chrome.runtime.onStartup.addListener(setupDeclarativeNetRequest);
 
 // --- SLI request detection helpers (mirrored from devtools-controller.js) ---
 
+function isLrRequest(url) {
+  return /\.sli-r\.com\//i.test(url);
+}
+
 function isSliRequest(url, responseHeaders) {
   if (url.includes('sli_profile_format=xml') || url.includes('sli_profile=')) return false;
   const hasSliHeader = (responseHeaders || []).some(
@@ -94,6 +98,18 @@ function clearCachedRequests(tabId) {
 
 chrome.webRequest.onCompleted.addListener(
   function(details) {
+    if (isLrRequest(details.url)) {
+      getCachedRequests(details.tabId, function(current) {
+        const lr = current.lr || [];
+        if (!lr.includes(details.url)) lr.push(details.url);
+        current.lr = lr;
+        const update = {};
+        update[cacheKey(details.tabId)] = current;
+        chrome.storage.session.set(update);
+        console.log('SLI bg: cached LR for tab', details.tabId, details.url);
+      });
+      return;
+    }
     if (!isSliRequest(details.url, details.responseHeaders)) return;
     const page = getPageType(details.url);
     setCachedRequest(details.tabId, page, { url: details.url, headers: details.responseHeaders || [] });
