@@ -4,6 +4,14 @@ A Chrome DevTools extension for debugging SLI search integrations. It intercepts
 
 ---
 
+## Updating
+
+1. Pull the latest changes: `git pull`
+2. Go to `chrome://extensions` and click **↺** (reload) on SLI Dev Tools
+3. Close and reopen DevTools (`F12`)
+
+---
+
 ## Installation
 
 ### Prerequisites
