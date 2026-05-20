@@ -56,7 +56,7 @@ The extension automatically detects SLI search requests as they complete (or fro
 
 ### Profile Pages
 
-Detected requests are split into three profile pages — **Parent**, **Ajax**, and **RAC** — each with six tabs:
+Detected requests are split into three profile pages — **Parent**, **Ajax**, and **RAC** — each with eight tabs:
 
 | Tab | Content |
 |-----|---------|
@@ -66,12 +66,48 @@ Detected requests are split into three profile pages — **Parent**, **Ajax**, a
 | **Output** | Output data tree |
 | **Results** | Individual search results |
 | **Timing** | Per-stage timing breakdown |
+| **CF + WAF** | CloudFront and WAF request headers from the profile |
+| **SEO** | Page-level SEO checks — meta tags, robots.txt, sitemap coverage |
 
 ### Summary Tab
 
 - **Search Request** — Searcher ID, client name, machine, CGI URL
 - **Sources** — Collapsible list of search sources, each showing their last query URLs. Mobile sources are filtered out.
 - **Dynamic Templates – Components** — Fetches `tb.json` for the detected environment (local / demo / prod) and resolves the dynamic template component URL for the current template set and collection. Hidden automatically if no component is found.
+
+### CF + WAF Tab
+
+Displays CloudFront and WAF-related request headers extracted from the XML profile, useful for diagnosing caching and security rule behaviour.
+
+### SEO Tab
+
+Runs a set of SEO checks against the inspected page and its domain. Checks vary by page type:
+
+**Search pages (p=Q)**
+- Meta robots `noindex` present
+- robots.txt disallows `/search` and `/search/go`
+
+**Crawlable pages (LN / SC / LPC)**
+- Title tag present and within recommended length (30–60 chars)
+- Meta description present and within recommended length (70–160 chars)
+- Canonical URL present and pointing to the clean (non-parameterised) URL
+- Language attribute on `<html>`
+- Viewport meta tag
+- Favicon declared
+- Single H1
+- Image alt text — count of images missing `alt`
+- Open Graph tags (`og:title`, `og:description`, `og:image`)
+- Twitter Card tags
+- JSON-LD structured data — lists all schema types found
+
+**robots.txt (all pages)**
+- SLI sitemap declared (matches `sli_sitemapindex` path or `resultspage.com` host)
+- Current page path crawlable (not blocked by a Disallow rule)
+- Relevant Disallow rules for the current path
+
+**SLI Sitemap**
+- Sitemap index accessible — fetched from the URL declared in robots.txt, falling back to `origin/sli_sitemapindex.xml.gz`
+- Sub-sitemap coverage — checks whether a sub-sitemap's directory path covers the current page path (e.g. `/tractor/sitemapSC1.xml.gz` covers `/tractor/*`)
 
 ### Result Info Tab
 
@@ -118,6 +154,7 @@ Light and dark themes with a toggle button in the toolbar. The chosen theme pers
 | `js/devtools-controller.js` | DevTools panel bootstrap, network monitoring, routing |
 | `js/devtools-profilemanager.js` | XML profile parsing and tree rendering |
 | `js/devtools-summary-tab.js` | Summary tab — sources, tb.json lookup |
+| `js/devtools-seo.js` | SEO tab — page checks, robots.txt, sitemap coverage |
 | `js/devtools-lrmanager.js` | LR tab — JSONP parsing and rendering |
 | `js/devtools-resultinfo.js` | Result Info tab |
 | `css/debugger.css` | All panel styles (CSS custom properties for theming) |
