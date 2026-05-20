@@ -176,14 +176,19 @@ ProfileManager.prototype = {
 
   parseTimings: function(xmldoc, target) {
     const self = this;
+    let maxTotal = 0;
+    $(xmldoc).find('profile timing, profile timing *').each(function() {
+      const t = parseFloat($(this).attr('total')) || 0;
+      if (t > maxTotal) maxTotal = t;
+    });
     let html = '';
     $(xmldoc).find('profile timing').each(function(i) {
-      html += self.parseTimingNode(this, i, 1, 'Timing');
+      html += self.parseTimingNode(this, i, 1, 'Timing', maxTotal);
     });
     $(target + ' .timing .contents ul').append(html);
   },
 
-  parseTimingNode: function(node, index, level, parentId) {
+  parseTimingNode: function(node, index, level, parentId, maxTotal) {
     if (this._recursion_counter > this._recursion_max) return '';
     this._recursion_counter++;
 
@@ -194,14 +199,21 @@ ProfileManager.prototype = {
     const count = $(node).attr('count') || '';
     const self = this;
 
+    const totalMs = parseFloat(total) || 0;
+    const barPct = (maxTotal > 0 && totalMs > 0) ? Math.max(1, Math.round((totalMs / maxTotal) * 100)) : 0;
+    const barHtml = '<span class="timing-bar">'
+      + (barPct > 0 ? '<span class="timing-bar-fill" style="width:' + barPct + '%"></span>' : '')
+      + '</span>';
+
     let html = this.makeLiHeader(id, parentId, hasChildren)
       + '<span>' + total + '</span><span>' + count + '</span><span class="name">' + name + '</span>'
+      + barHtml
       + this.makeLiFooter(hasChildren);
 
     if (hasChildren) {
       html += "<ul parent_id='" + id + "'>";
       $(node).children().each(function(i) {
-        html += self.parseTimingNode(this, i, level + 1, id);
+        html += self.parseTimingNode(this, i, level + 1, id, maxTotal);
       });
       html += '</ul>';
     }
@@ -213,6 +225,19 @@ ProfileManager.prototype = {
 
   parseStatus: function(xmldoc, target) {
     const self = this;
+    const $sources = $(xmldoc).find('status Finder SearchSource');
+    if ($sources.length > 0) {
+      let okCount = 0, warnCount = 0;
+      $sources.each(function() {
+        const st = ($(this).find('sourceStatus').text() || '').trim().toUpperCase();
+        if (st === 'OK') okCount++;
+        else if (st) warnCount++;
+      });
+      const parts = [$sources.length + ' source' + ($sources.length !== 1 ? 's' : '')];
+      if (okCount)   parts.push('<span class="sum-ok">'   + okCount   + ' OK</span>');
+      if (warnCount) parts.push('<span class="sum-warn">' + warnCount + ' warning' + (warnCount !== 1 ? 's' : '') + '</span>');
+      $(target + ' .status .contents.title').html('<div class="tab-summary">' + parts.join(' · ') + '</div>');
+    }
     let html = '';
     $(xmldoc).find('status Finder').each(function(i) {
       html += self.parseStatusNode(this, i, 1, 'Status');
@@ -268,12 +293,24 @@ ProfileManager.prototype = {
 
   parseData: function(xmldoc, target) {
     const self = this;
-    let html = '';
 
+    const KEY_PARAMS = ['q', 'ts', 'tsv', 'lbc', 'p', 'num', 'start', 'collection'];
+    const keyItems = [];
+    KEY_PARAMS.forEach(function(name) {
+      const $el = $(xmldoc).find('data input element[name="' + name + '"]');
+      if ($el.length) {
+        keyItems.push('<div class="kp-item"><b class="kp-name">' + name + '</b><code class="kp-val">' + ($el.attr('value') || '') + '</code></div>');
+      }
+    });
+    if (keyItems.length) {
+      $(target + ' .input .contents.title').html('<div class="key-params">' + keyItems.join('') + '</div>');
+    }
+
+    let html = '';
     $(xmldoc).find('data input elements').each(function(i) {
       html += self.parseDataNode(this, i, 1, 'input');
     });
-    $(target + ' .input .contents ul').append(html);
+    $(target + ' .input .contents:not(.title) ul').append(html);
 
     html = '';
     $(xmldoc).find('data output resultset > elements').each(function(i) {
@@ -361,8 +398,14 @@ ProfileManager.prototype = {
 
   parseResults: function(xmldoc, target) {
     const self = this;
+    const $results = $(xmldoc).find('data output resultset results');
+    if ($results.length > 0) {
+      $(target + ' .results .contents.title').html(
+        '<div class="tab-summary">' + $results.length + ' result' + ($results.length !== 1 ? 's' : '') + '</div>'
+      );
+    }
     let html = '';
-    $(xmldoc).find('data output resultset results').each(function(i) {
+    $results.each(function(i) {
       html += self.parseDataNode(this, i, 1, 'results');
     });
     $(target + ' .results .contents ul').append(html);

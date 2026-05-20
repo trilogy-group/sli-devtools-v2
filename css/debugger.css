@@ -164,9 +164,47 @@ div.profile .contents ul li span:nth-child(3) { width: 70%; min-width: 230px; co
 div.profile .timing .contents ul li span:nth-child(1) { width: 10px; }
 div.profile .timing .contents ul li span:nth-child(2) { width: 60px; color: var(--success); }
 div.profile .timing .contents ul li span:nth-child(3) { width: 40px; color: var(--text-muted); }
-div.profile .timing .contents ul li span:nth-child(4) { width: 300px; }
+div.profile .timing .contents ul li span:nth-child(4) { width: 180px; }
+
+span.timing-bar {
+  display: inline-block;
+  width: 120px !important;
+  height: 8px;
+  background: var(--surface-inset);
+  border-radius: 2px;
+  vertical-align: middle !important;
+  overflow: hidden;
+  max-height: none !important;
+  padding: 0;
+  margin-left: 4px;
+}
+.timing-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--success);
+  border-radius: 2px;
+  min-width: 1px;
+}
 
 div.profile .sourcelink { float: right; margin-right: 5px; color: var(--primary); }
+
+/* ── Tab summary header (Status / Results / Input) ──────── */
+div.profile .contents.title:not(:empty) {
+  padding: 5px 10px;
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.tab-summary { display: inline-flex; gap: 8px; align-items: center; }
+.sum-ok   { color: var(--success); font-weight: 600; }
+.sum-warn { color: var(--warning); font-weight: 600; }
+
+/* ── Key params (input tab) ─────────────────────────────── */
+.key-params { display: block; }
+.kp-item    { display: flex; align-items: baseline; gap: 8px; padding: 2px 0; }
+.kp-name    { font-family: var(--mono); font-size: 11px; font-weight: normal; color: var(--text-muted); min-width: 80px; flex-shrink: 0; }
+.kp-val     { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--primary); background: transparent; border: none; padding: 0; border-radius: 0; }
 
 /* ── Accordion (shared) ─────────────────────────────────── */
 .accordion-group   { margin: 0 0 1px; border: none; border-radius: 0; background: var(--surface); }
@@ -287,6 +325,25 @@ div.tab.summary .accordion-inner .accordion-group .accordion-inner a {
 div.tab.summary .accordion-inner .accordion-group .accordion-inner em {
   color: var(--text-muted);
   font-size: 11px;
+}
+
+/* ── Source query params table ──────────────────────────── */
+.src-query-header { margin-bottom: 3px; }
+.src-query-label  { color: var(--text-muted); font-size: 10px; }
+.src-params { border-collapse: collapse; margin-top: 4px; font-size: 10px; width: 100%; }
+.src-param-key {
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 1px 10px 1px 0;
+  white-space: nowrap;
+  vertical-align: top;
+  width: 1%;
+}
+.src-param-val {
+  color: var(--text);
+  font-family: var(--mono);
+  word-break: break-all;
+  padding: 1px 0;
 }
 
 /* check values */

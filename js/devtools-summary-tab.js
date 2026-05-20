@@ -63,13 +63,11 @@ ProfileManager.prototype.summary_listsources = function(xmldoc, target, page, ur
   const $sources = $(xmldoc).find('status Finder SearchSource');
   const ipPattern = /(https?:\/\/)(\d+\.\d+\.\d+\.\d+)([^0-9.].*?$)/i;
 
-  let innerHtml = '';
+  const sources = [];
 
   if ($sources.length > 0) {
     $sources.each(function() {
       const name = $(this).find('sourceName').text() || 'Unknown';
-
-      // Skip mobile sources
       if (/mobile/i.test(name)) return;
 
       const machineName = $(this).siblings('machineName').text();
@@ -83,7 +81,23 @@ ProfileManager.prototype.summary_listsources = function(xmldoc, target, page, ur
           queryUrl = queryUrl.replace(ipPattern, '$1' + machineName + '$3');
         }
         const label = this.tagName.replace(/(.+)Query$/i, '$1');
-        linkItems.push('<li><a href="' + queryUrl + '" target="_blank">' + queryUrl + '</a> <em>(' + label + ')</em></li>');
+
+        let paramsHtml = '';
+        try {
+          const rows = [];
+          new URL(queryUrl).searchParams.forEach(function(val, key) {
+            rows.push('<tr><td class="src-param-key">' + key + '</td><td class="src-param-val">' + val + '</td></tr>');
+          });
+          if (rows.length) paramsHtml = '<table class="src-params"><tbody>' + rows.join('') + '</tbody></table>';
+        } catch(e) {}
+
+        linkItems.push(
+          '<li>'
+          + '<div class="src-query-header"><a href="' + queryUrl + '" target="_blank">' + queryUrl + '</a>'
+          + ' <em class="src-query-label">(' + label + ')</em></div>'
+          + paramsHtml
+          + '</li>'
+        );
 
         if (!relevanceUrl && queryUrl.includes('dorycgi')) {
           relevanceUrl = queryUrl
@@ -92,20 +106,32 @@ ProfileManager.prototype.summary_listsources = function(xmldoc, target, page, ur
         }
       });
 
-      // Skip sources with no query URLs
       if (!linkItems.length) return;
 
-      const relevanceLink = relevanceUrl
-        ? '<a class="relevance-link" href="' + relevanceUrl + '" target="_blank">Relevance info</a>'
-        : '';
-
-      innerHtml +=
-        '<div class="accordion-group">'
-        + '<div class="accordion-heading"><a class="accordion-toggle name">' + name + '</a>' + relevanceLink + '</div>'
-        + '<div class="accordion-body collapse"><div class="accordion-inner"><ul>' + linkItems.join('') + '</ul></div></div>'
-        + '</div>';
+      sources.push({ name, linkItems, relevanceUrl });
     });
   }
+
+  // SITE_INDEX* first, then alphabetical
+  sources.sort(function(a, b) {
+    const aIsSite = /^SITE_INDEX/i.test(a.name);
+    const bIsSite = /^SITE_INDEX/i.test(b.name);
+    if (aIsSite && !bIsSite) return -1;
+    if (!aIsSite && bIsSite) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  let innerHtml = '';
+  sources.forEach(function(src) {
+    const relevanceLink = src.relevanceUrl
+      ? '<a class="relevance-link" href="' + src.relevanceUrl + '" target="_blank">Relevance info</a>'
+      : '';
+    innerHtml +=
+      '<div class="accordion-group">'
+      + '<div class="accordion-heading"><a class="accordion-toggle name">' + src.name + '</a>' + relevanceLink + '</div>'
+      + '<div class="accordion-body collapse"><div class="accordion-inner"><ul>' + src.linkItems.join('') + '</ul></div></div>'
+      + '</div>';
+  });
 
   if (!innerHtml) innerHtml = '<em>No sources found.</em>';
 
