@@ -121,12 +121,58 @@ ProfileManager.prototype = {
       if (response && response.success) {
         self.make_profile({ data: response.data }, profileUrl, page);
       } else {
-        self.showProfileFailed(
-          'Could not fetch: <a target="_blank" href="' + profileUrl + '">' + profileUrl + '</a>',
-          page, response
-        );
+        // Primary URL failed — try resultspage.com fallback
+        self._tryResultspageFallback(url, profilestring, page, profileUrl);
       }
     });
+  },
+
+  _tryResultspageFallback: function(originalUrl, profilestring, page, failedUrl) {
+    const self = this;
+
+    function buildFallback(lbc) {
+      if (!lbc) return null;
+      let search = '';
+      try { search = new URL(originalUrl).search; } catch(e) {}
+      const sep = search ? '&' : '?';
+      return 'https://' + lbc + '.resultspage.com/search' + search + sep + profilestring;
+    }
+
+    function tryFetch(lbc) {
+      const fallbackUrl = buildFallback(lbc);
+      if (!fallbackUrl) {
+        self.showProfileFailed(
+          'Could not fetch: <a target="_blank" href="' + failedUrl + '">' + failedUrl + '</a>',
+          page
+        );
+        return;
+      }
+      console.log('SLI: trying resultspage.com fallback:', fallbackUrl);
+      chrome.runtime.sendMessage({ type: 'xhr', url: fallbackUrl }, function(resp) {
+        if (resp && resp.success) {
+          self.make_profile({ data: resp.data }, fallbackUrl, page);
+        } else {
+          self.showProfileFailed(
+            'Could not fetch: <a target="_blank" href="' + failedUrl + '">' + failedUrl + '</a>'
+            + ' &mdash; also tried <a target="_blank" href="' + fallbackUrl + '">' + fallbackUrl + '</a>',
+            page
+          );
+        }
+      });
+    }
+
+    // Try lbc from the original URL first, then from the inspected window
+    let lbc = null;
+    try { lbc = new URL(originalUrl).searchParams.get('lbc'); } catch(e) {}
+
+    if (lbc) {
+      tryFetch(lbc);
+    } else {
+      chrome.devtools.inspectedWindow.eval(
+        '(function(){ return new URLSearchParams(location.search).get("lbc"); })()',
+        function(res, isEx) { tryFetch(!isEx && res ? res : null); }
+      );
+    }
   },
 
   make_profile: function(response, url, page) {
@@ -157,6 +203,7 @@ ProfileManager.prototype = {
     this.updateresultinfo(page, 'moby');
     this.parseprofile(xmldoc, target);
     this.updatesummary(page, target, this[page].url);
+    if (typeof this.updateseo === 'function') this.updateseo(page, target);
     this.unescapehtml(target);
 
     $('.navbar-fixed-top .nav a[href="#profile_' + page + '"]').find('img').hide();
