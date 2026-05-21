@@ -7,6 +7,7 @@ ProfileManager.prototype.updateseo = function(page, target) {
   const $xml    = $(data.xmldoc);
   const cgiUrl  = $xml.find('data input element[name="CGI URL"]').attr('value') || '';
   const pParam  = $xml.find('data input element[name="p"]').attr('value') || '';
+  const lbc     = $xml.find('data input element[name="lbc"]').attr('value') || '';
 
   let origin;
   try { origin = new URL(cgiUrl).origin; } catch(e) {
@@ -29,7 +30,7 @@ ProfileManager.prototype.updateseo = function(page, target) {
 
   function check() {
     if (--remaining > 0) return;
-    $el.html(seoRender(R, origin, isSearch, pageType, pParam));
+    $el.html(seoRender(R, origin, isSearch, pageType, pParam, lbc));
   }
 
   // 1. Page meta tags from inspected window
@@ -104,12 +105,16 @@ ProfileManager.prototype.updateseo = function(page, target) {
   });
 };
 
-function seoRender(R, origin, isSearch, pageType, pParam) {
+var _zdCtx = {};
+
+function seoRender(R, origin, isSearch, pageType, pParam, lbc) {
   var m           = R.meta || {};
   var metaContent = m.robots || null;
   var hasNoindex  = !!(metaContent && /noindex/i.test(metaContent));
   var pagePath    = m.path || '';
   var parsed      = R.robots ? seoParseRobots(R.robots) : null;
+
+  _zdCtx = { origin: origin, pagePath: pagePath, pageType: pageType, lbc: lbc || '' };
 
   var html = '<div class="seo-columns"><div class="seo-col">';
 
@@ -330,7 +335,9 @@ function seoRender(R, origin, isSearch, pageType, pParam) {
   html += seoCheck(
     '<a href="' + seoEsc(fetchedUrl) + '" target="_blank" class="seo-link">' + seoEsc(fetchedUrl) + '</a> accessible',
     R.sitemapOk,
-    R.sitemapOk ? null : 'Not found or inaccessible'
+    R.sitemapOk ? null : 'Not found or inaccessible',
+    fetchedUrl + ' inaccessible',
+    fetchedUrl + ' is not accessible.\n\nThis is likely caused by a proxy or WAF rule blocking the sitemap URL. Please review your proxy/CDN configuration to ensure this URL is accessible externally, or send it through to us for investigation.'
   );
 
   if (R.sitemapOk && R.sitemapXml && !isSearch) {
@@ -381,15 +388,28 @@ function seoRender(R, origin, isSearch, pageType, pParam) {
   return html;
 }
 
-function seoCheck(label, ok, detail) {
+function seoCheck(label, ok, detail, zdLabel, zdDesc) {
   var cls  = ok ? 'seo-pass' : 'seo-fail';
   var icon = ok ? '✓' : '✗';
+  var zdBtn = '';
+  if (!ok) {
+    var plainLabel  = seoStripTags(label);
+    var plainDetail = seoStripTags(detail || '');
+    var subject = '[SEO] ' + (zdLabel || plainLabel);
+    var body = (zdDesc || (plainLabel + (plainDetail ? '\n' + plainDetail : '')))
+      + '\n\n---\nDetected by SLI Dev Tools';
+    zdBtn = '<button class="seo-zd-btn"'
+      + ' data-subject="' + seoEsc(subject) + '"'
+      + ' data-desc="' + seoEsc(body) + '"'
+      + ' title="Create ZD ticket">ZD</button>';
+  }
   return '<div class="seo-check ' + cls + '">'
     + '<span class="seo-icon">' + icon + '</span>'
     + '<div class="seo-check-body">'
     + '<span class="seo-check-label">' + label + '</span>'
     + (detail ? '<div class="seo-check-detail">' + detail + '</div>' : '')
     + '</div>'
+    + zdBtn
     + '</div>';
 }
 
@@ -415,6 +435,71 @@ function seoParseRobots(text) {
 function seoEsc(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+function seoStripTags(html) {
+  return String(html)
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"')
+    .trim();
+}
+
+$(function() {
+  // Build modal once
+  var $zdModal = $(
+    '<div id="seo-zd-modal" class="seo-zd-modal" style="display:none">' +
+      '<div class="seo-zd-modal-inner">' +
+        '<div class="seo-zd-modal-header">' +
+          '<strong>New ZD Ticket</strong>' +
+          '<button class="seo-zd-close" title="Close">×</button>' +
+        '</div>' +
+        '<div class="seo-zd-field">' +
+          '<div class="seo-zd-field-header">' +
+            '<span class="seo-zd-label">Subject</span>' +
+            '<button class="seo-zd-copy-btn" data-target="subject">Copy</button>' +
+          '</div>' +
+          '<div class="seo-zd-subject"></div>' +
+        '</div>' +
+        '<div class="seo-zd-field">' +
+          '<div class="seo-zd-field-header">' +
+            '<span class="seo-zd-label">Description</span>' +
+            '<button class="seo-zd-copy-btn" data-target="desc">Copy</button>' +
+          '</div>' +
+          '<div class="seo-zd-desc"></div>' +
+        '</div>' +
+        '<div class="seo-zd-actions">' +
+          '<a class="seo-zd-open" href="https://vrya.zendesk.com/agent/tickets/new/1" target="_blank">Open ZD ↗</a>' +
+        '</div>' +
+      '</div>' +
+    '</div>'
+  );
+  $('body').append($zdModal);
+
+  $(document).on('click', '.seo-zd-btn', function() {
+    $zdModal.find('.seo-zd-subject').text($(this).data('subject'));
+    $zdModal.find('.seo-zd-desc').text($(this).data('desc'));
+    $zdModal.find('.seo-zd-copy-btn').text('Copy');
+    $zdModal.show();
+  });
+
+  $(document).on('click', '.seo-zd-close', function() {
+    $zdModal.hide();
+  });
+
+  $(document).on('click', '.seo-zd-copy-btn', function() {
+    var target = $(this).data('target');
+    var val = target === 'subject'
+      ? $zdModal.find('.seo-zd-subject').text()
+      : $zdModal.find('.seo-zd-desc').text();
+    var $btn = $(this);
+    navigator.clipboard.writeText(val).then(function() {
+      $btn.text('Copied!');
+      setTimeout(function() { $btn.text('Copy'); }, 2000);
+    }).catch(function() {
+      $btn.text('Error');
+      setTimeout(function() { $btn.text('Copy'); }, 2000);
+    });
+  });
+});
 
 function seoRulePrefix(rule) {
   var star = rule.indexOf('*');

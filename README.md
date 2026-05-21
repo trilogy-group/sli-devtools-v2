@@ -109,6 +109,15 @@ Runs a set of SEO checks against the inspected page and its domain. Checks vary 
 - Sitemap index accessible — fetched from the URL declared in robots.txt, falling back to `origin/sli_sitemapindex.xml.gz`
 - Sub-sitemap coverage — checks whether a sub-sitemap's directory path covers the current page path (e.g. `/tractor/sitemapSC1.xml.gz` covers `/tractor/*`)
 
+### ZD Ticket Creation
+
+Any failing SEO check shows a **ZD** button on hover. Clicking it opens a modal pre-filled with:
+
+- **Subject** — `[SEO] {issue summary}`
+- **Description** — the immediate issue with remediation guidance addressed directly to the client
+
+Use the **Copy** buttons to copy each field, then click **Open ZD ↗** to open a new Zendesk ticket. Paste the subject and description into the form before submitting.
+
 ### Result Info Tab
 
 Displays structured result data and facets from the last SLI response.
