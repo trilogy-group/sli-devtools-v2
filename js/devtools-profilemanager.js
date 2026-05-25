@@ -399,8 +399,9 @@ ProfileManager.prototype = {
   // --- CF + WAF tab ---
 
   parseCFWAF: function(xmldoc, target) {
+    const $xml = $(xmldoc);
     const headers = [];
-    $(xmldoc).find('data input element').each(function() {
+    $xml.find('data input element').each(function() {
       const name = $(this).attr('name') || '';
       if (!/^HEADER_/i.test(name)) return;
       headers.push({
@@ -409,13 +410,46 @@ ProfileManager.prototype = {
       });
     });
 
-    const $content = $(target + ' .cfwaf .cfwaf-content');
+    const cgiUrl = $xml.find('data input element[name="CGI URL"]').attr('value') || '';
+    let originHost = '';
+    try { originHost = new URL(cgiUrl).hostname; } catch(e) {}
 
-    if (!headers.length) {
-      $content.html('<p class="cfwaf-empty">No request headers found in profile.</p>');
-      return;
+    // Scan raw XML text for all SLI-hosted domains actually referenced
+    // (resultspage / resultsdemo / resultsstage appear in SearchSource query URLs)
+    const sliHosts = [];
+    const seen = {};
+    const sliPattern = /([a-z0-9][a-z0-9-]*\.(?:resultspage|resultsdemo|resultsstage)\.com)/gi;
+    const xmlText = new XMLSerializer().serializeToString(xmldoc);
+    let m;
+    while ((m = sliPattern.exec(xmlText)) !== null) {
+      const h = m[1].toLowerCase();
+      if (!seen[h]) { seen[h] = true; sliHosts.push(h); }
     }
 
+    const $content = $(target + ' .cfwaf .cfwaf-content');
+
+    // DNS section at the top — rows updated incrementally
+    const dnsTargets = sliHosts.map(function(h) { return { label: h, host: h }; });
+    if (originHost && !seen[originHost]) {
+      dnsTargets.push({ label: originHost, host: originHost });
+    }
+
+    function dnsRowId(host) { return 'cfwaf-dns-' + host.replace(/[^a-z0-9]/gi, '-'); }
+
+    let html = '';
+    if (dnsTargets.length) {
+      html += '<h4 class="cfwaf-section-title" style="margin-top:0">DNS Resolution</h4>'
+        + '<table class="cfwaf-table cfwaf-dns-table"><tbody>'
+        + dnsTargets.map(function(t) {
+            return '<tr id="' + dnsRowId(t.host) + '">'
+              + '<td class="cfwaf-name cfwaf-dns-host">' + t.label + '</td>'
+              + '<td class="cfwaf-value"><em class="cfwaf-empty">Resolving…</em></td>'
+              + '</tr>';
+          }).join('')
+        + '</tbody></table>';
+    }
+
+    // Header tables below DNS
     const isCF  = h => /cloudfront|^cf-/i.test(h.name);
     const isWAF = h => /x-amzn-waf|x-amz-waf/i.test(h.name);
     const cf    = headers.filter(h => isCF(h) || isWAF(h));
@@ -430,15 +464,62 @@ ProfileManager.prototype = {
         + '</tbody></table>';
     }
 
-    let html = '';
-    if (cf.length) {
-      html += '<h4 class="cfwaf-section-title">CloudFront &amp; WAF</h4>' + renderTable(cf);
-    }
-    if (other.length) {
-      html += '<h4 class="cfwaf-section-title">Other Headers</h4>' + renderTable(other);
+    if (!headers.length) {
+      html += '<p class="cfwaf-empty">No request headers found in profile.</p>';
+    } else {
+      if (cf.length)    html += '<h4 class="cfwaf-section-title">CloudFront &amp; WAF</h4>' + renderTable(cf);
+      if (other.length) html += '<h4 class="cfwaf-section-title">Other Headers</h4>' + renderTable(other);
     }
 
     $content.html(html);
+
+    // Async DNS lookups via Google DNS-over-HTTPS
+    function renderDnsResult($td, r) {
+      if (r.cname) {
+        var badge = /cloudfront\.net\.?$/i.test(r.cname)
+          ? ' <span class="cfwaf-badge cfwaf-badge-ok">CloudFront</span>' : '';
+        $td.html('<span class="cfwaf-dns-value">' + r.cname + '</span>' + badge);
+      } else if (r.a) {
+        $td.html('<span class="cfwaf-dns-value">' + r.a + '</span>');
+      } else if (r.nxdomain) {
+        $td.html('<span class="cfwaf-dns-nxdomain">NXDOMAIN</span>'
+          + ' <span class="cfwaf-badge cfwaf-badge-warn">Not found</span>');
+      } else {
+        $td.html('<span class="cfwaf-dns-nxdomain">' + (r.error || 'error') + '</span>');
+      }
+    }
+
+    function dohFetch(host, type, cb) {
+      chrome.runtime.sendMessage(
+        { type: 'xhr', url: 'https://dns.google/resolve?name=' + encodeURIComponent(host) + '&type=' + type },
+        function(resp) {
+          if (!resp || !resp.success) { cb(null); return; }
+          try { cb(JSON.parse(resp.data)); } catch(e) { cb(null); }
+        }
+      );
+    }
+
+    dnsTargets.forEach(function(t) {
+      var $td = $content.find('#' + dnsRowId(t.host) + ' td.cfwaf-value');
+      dohFetch(t.host, 'CNAME', function(data) {
+        if (!data) { renderDnsResult($td, { error: 'lookup failed' }); return; }
+        if (data.Status === 3) { renderDnsResult($td, { nxdomain: true }); return; }
+        var cnames = (data.Answer || []).filter(function(a) { return a.type === 5; });
+        if (cnames.length) {
+          renderDnsResult($td, { cname: cnames[cnames.length - 1].data.replace(/\.$/, '') });
+          return;
+        }
+        // No CNAME — fall back to A record
+        dohFetch(t.host, 'A', function(data2) {
+          if (!data2) { renderDnsResult($td, { error: 'lookup failed' }); return; }
+          if (data2.Status === 3) { renderDnsResult($td, { nxdomain: true }); return; }
+          var aRecs = (data2.Answer || []).filter(function(a) { return a.type === 1; });
+          renderDnsResult($td, aRecs.length
+            ? { a: aRecs.map(function(r) { return r.data; }).join(', ') }
+            : { error: 'no records' });
+        });
+      });
+    });
   },
 
   // --- Results tab ---

@@ -479,6 +479,29 @@ div.profile div.tab.cfwaf { padding: 12px; overflow-y: auto; }
   vertical-align: top;
   border-bottom: 1px solid var(--border);
 }
+.cfwaf-dns-table .cfwaf-name { font-family: var(--mono); font-size: 11px; }
+.cfwaf-dns-value { font-family: var(--mono); font-size: 11px; }
+.cfwaf-dns-nxdomain { color: var(--error); font-family: var(--mono); font-size: 11px; }
+.cfwaf-badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 6px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.cfwaf-badge-ok {
+  background: rgba(87,171,90,0.15);
+  color: var(--success);
+  border: 1px solid rgba(87,171,90,0.3);
+}
+.cfwaf-badge-warn {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error-border);
+}
+
 .cfwaf-name {
   white-space: nowrap;
   color: var(--text-muted);
