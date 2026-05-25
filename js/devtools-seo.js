@@ -84,7 +84,8 @@ ProfileManager.prototype.updateseo = function(page, target) {
 
   // 2. robots.txt → parse → fetch whichever SLI sitemap it references (or fallback to origin)
   chrome.runtime.sendMessage({ type: 'xhr', url: origin + '/robots.txt' }, function(resp) {
-    R.robots = (resp && resp.success) ? resp.data : null;
+    R.robots       = (resp && resp.success) ? resp.data : null;
+    R.robotsStatus = (resp && resp.status) || null;
 
     // Prefer the sitemap URL declared in robots.txt; fall back to the origin path
     var sitemapUrl = origin + '/sli_sitemapindex.xml.gz';
@@ -98,8 +99,9 @@ ProfileManager.prototype.updateseo = function(page, target) {
 
     R.sitemapFetchedUrl = sitemapUrl;
     chrome.runtime.sendMessage({ type: 'xhr', url: sitemapUrl, decompress: true }, function(resp2) {
-      R.sitemapOk  = !!(resp2 && resp2.success);
-      R.sitemapXml = (resp2 && resp2.success) ? resp2.data : null;
+      R.sitemapOk     = !!(resp2 && resp2.success);
+      R.sitemapStatus = (resp2 && resp2.status) || null;
+      R.sitemapXml    = (resp2 && resp2.success) ? resp2.data : null;
       check();
     });
   });
@@ -265,7 +267,9 @@ function seoRender(R, origin, isSearch, pageType, pParam, lbc) {
   html += '<h4 class="seo-section-title">robots.txt — <a href="' + origin + '/robots.txt" target="_blank" class="seo-link">' + origin + '/robots.txt</a></h4>';
 
   if (!parsed) {
-    html += '<p class="seo-error">Could not fetch robots.txt</p>';
+    var robotsErrMsg = 'Could not fetch robots.txt'
+      + (R.robotsStatus ? ' <span class="seo-badge seo-badge-warn">HTTP ' + R.robotsStatus + '</span>' : '');
+    html += '<p class="seo-error">' + robotsErrMsg + '</p>';
   } else {
     // Search path coverage — only relevant on search pages
     if (isSearch) {
@@ -332,12 +336,13 @@ function seoRender(R, origin, isSearch, pageType, pParam, lbc) {
   html += '<div class="seo-section">';
   html += '<h4 class="seo-section-title">SLI Sitemap</h4>';
   var fetchedUrl = R.sitemapFetchedUrl || (origin + '/sli_sitemapindex.xml.gz');
+  var sitemapStatusStr = (!R.sitemapOk && R.sitemapStatus) ? ' (HTTP ' + R.sitemapStatus + ')' : '';
   html += seoCheck(
     '<a href="' + seoEsc(fetchedUrl) + '" target="_blank" class="seo-link">' + seoEsc(fetchedUrl) + '</a> accessible',
     R.sitemapOk,
-    R.sitemapOk ? null : 'Not found or inaccessible',
+    R.sitemapOk ? null : 'Not found or inaccessible' + sitemapStatusStr,
     fetchedUrl + ' inaccessible',
-    fetchedUrl + ' is not accessible.\n\nThis is likely caused by a proxy or WAF rule blocking the sitemap URL. Please review your proxy/CDN configuration to ensure this URL is accessible externally, or send it through to us for investigation.'
+    fetchedUrl + ' is not accessible' + sitemapStatusStr + '.\n\nThis is likely caused by a proxy or WAF rule blocking the sitemap URL. Please review your proxy/CDN configuration to ensure this URL is accessible externally, or send it through to us for investigation.'
   );
 
   if (R.sitemapOk && R.sitemapXml && !isSearch) {

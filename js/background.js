@@ -143,27 +143,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'xhr' && message.url) {
     fetch(message.url)
       .then(async response => {
+        const status = response.status;
         const ok = response.ok;
-        if (!ok) { sendResponse({ success: false }); return; }
+        if (!ok) { sendResponse({ success: false, status }); return; }
         if (message.decompress) {
           const clone = response.clone();
           try {
             const blob = await response.blob();
             const stream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
             const data = await new Response(stream).text();
-            sendResponse({ success: true, data });
+            sendResponse({ success: true, data, status });
           } catch(e) {
             // Browser may have already auto-decompressed (Content-Encoding: gzip)
             try {
               const data = await clone.text();
-              sendResponse({ success: true, data });
+              sendResponse({ success: true, data, status });
             } catch(e2) {
-              sendResponse({ success: false, error: 'decompress failed: ' + e });
+              sendResponse({ success: false, error: 'decompress failed: ' + e, status });
             }
           }
         } else {
           const data = await response.text();
-          sendResponse({ success: true, data });
+          sendResponse({ success: true, data, status });
         }
       })
       .catch(error => sendResponse({ success: false, error: error.toString() }));
