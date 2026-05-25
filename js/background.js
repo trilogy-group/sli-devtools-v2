@@ -144,27 +144,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     fetch(message.url)
       .then(async response => {
         const status = response.status;
+        const statusText = response.statusText || '';
         const ok = response.ok;
-        if (!ok) { sendResponse({ success: false, status }); return; }
+        if (!ok) { sendResponse({ success: false, status, statusText }); return; }
         if (message.decompress) {
           const clone = response.clone();
           try {
             const blob = await response.blob();
             const stream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
             const data = await new Response(stream).text();
-            sendResponse({ success: true, data, status });
+            sendResponse({ success: true, data, status, statusText });
           } catch(e) {
             // Browser may have already auto-decompressed (Content-Encoding: gzip)
             try {
               const data = await clone.text();
-              sendResponse({ success: true, data, status });
+              sendResponse({ success: true, data, status, statusText });
             } catch(e2) {
-              sendResponse({ success: false, error: 'decompress failed: ' + e, status });
+              sendResponse({ success: false, error: 'decompress failed: ' + e, status, statusText });
             }
           }
         } else {
           const data = await response.text();
-          sendResponse({ success: true, data, status });
+          sendResponse({ success: true, data, status, statusText });
         }
       })
       .catch(error => sendResponse({ success: false, error: error.toString() }));

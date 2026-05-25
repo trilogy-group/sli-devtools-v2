@@ -84,8 +84,9 @@ ProfileManager.prototype.updateseo = function(page, target) {
 
   // 2. robots.txt → parse → fetch whichever SLI sitemap it references (or fallback to origin)
   chrome.runtime.sendMessage({ type: 'xhr', url: origin + '/robots.txt' }, function(resp) {
-    R.robots       = (resp && resp.success) ? resp.data : null;
-    R.robotsStatus = (resp && resp.status) || null;
+    R.robots           = (resp && resp.success) ? resp.data : null;
+    R.robotsStatus     = (resp && resp.status) || null;
+    R.robotsStatusText = (resp && resp.statusText) || null;
 
     // Prefer the sitemap URL declared in robots.txt; fall back to the origin path
     var sitemapUrl = origin + '/sli_sitemapindex.xml.gz';
@@ -99,9 +100,10 @@ ProfileManager.prototype.updateseo = function(page, target) {
 
     R.sitemapFetchedUrl = sitemapUrl;
     chrome.runtime.sendMessage({ type: 'xhr', url: sitemapUrl, decompress: true }, function(resp2) {
-      R.sitemapOk     = !!(resp2 && resp2.success);
-      R.sitemapStatus = (resp2 && resp2.status) || null;
-      R.sitemapXml    = (resp2 && resp2.success) ? resp2.data : null;
+      R.sitemapOk         = !!(resp2 && resp2.success);
+      R.sitemapStatus     = (resp2 && resp2.status) || null;
+      R.sitemapStatusText = (resp2 && resp2.statusText) || null;
+      R.sitemapXml        = (resp2 && resp2.success) ? resp2.data : null;
       check();
     });
   });
@@ -268,7 +270,7 @@ function seoRender(R, origin, isSearch, pageType, pParam, lbc) {
 
   if (!parsed) {
     var robotsErrMsg = 'Could not fetch robots.txt'
-      + (R.robotsStatus ? ' <span class="seo-badge seo-badge-warn">HTTP ' + R.robotsStatus + '</span>' : '');
+      + (R.robotsStatus ? ' <span class="seo-badge seo-badge-warn">' + seoHttpStatus(R.robotsStatus, R.robotsStatusText) + '</span>' : '');
     html += '<p class="seo-error">' + robotsErrMsg + '</p>';
   } else {
     // Search path coverage — only relevant on search pages
@@ -336,7 +338,7 @@ function seoRender(R, origin, isSearch, pageType, pParam, lbc) {
   html += '<div class="seo-section">';
   html += '<h4 class="seo-section-title">SLI Sitemap</h4>';
   var fetchedUrl = R.sitemapFetchedUrl || (origin + '/sli_sitemapindex.xml.gz');
-  var sitemapStatusStr = (!R.sitemapOk && R.sitemapStatus) ? ' (HTTP ' + R.sitemapStatus + ')' : '';
+  var sitemapStatusStr = (!R.sitemapOk && R.sitemapStatus) ? ' (' + seoHttpStatus(R.sitemapStatus, R.sitemapStatusText) + ')' : '';
   html += seoCheck(
     '<a href="' + seoEsc(fetchedUrl) + '" target="_blank" class="seo-link">' + seoEsc(fetchedUrl) + '</a> accessible',
     R.sitemapOk,
@@ -391,6 +393,21 @@ function seoRender(R, origin, isSearch, pageType, pParam, lbc) {
   html += '</div></div>'; // close right col + columns wrapper
 
   return html;
+}
+
+var _HTTP_STATUS_TEXT = {
+  301: 'Moved Permanently', 302: 'Found', 304: 'Not Modified',
+  400: 'Bad Request',       401: 'Unauthorized',  403: 'Forbidden',
+  404: 'Not Found',         405: 'Method Not Allowed', 408: 'Request Timeout',
+  410: 'Gone',              429: 'Too Many Requests',
+  500: 'Internal Server Error', 502: 'Bad Gateway',
+  503: 'Service Unavailable',   504: 'Gateway Timeout'
+};
+
+function seoHttpStatus(status, statusText) {
+  if (!status) return '';
+  var text = (statusText && statusText.trim()) || _HTTP_STATUS_TEXT[status] || '';
+  return 'HTTP ' + status + (text ? ' ' + text : '');
 }
 
 function seoCheck(label, ok, detail, zdLabel, zdDesc) {
