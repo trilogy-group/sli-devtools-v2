@@ -273,12 +273,14 @@ function seoRender(R, origin, isSearch, pageType, pParam, lbc) {
       + (R.robotsStatus ? ' <span class="seo-badge seo-badge-warn">' + seoHttpStatus(R.robotsStatus, R.robotsStatusText) + '</span>' : '');
     html += '<p class="seo-error">' + robotsErrMsg + '</p>';
   } else {
-    // Search path coverage — only relevant on search pages
-    if (isSearch) {
-      ['/search', '/search/go'].forEach(function(sp) {
-        var ok = parsed.disallows.some(function(d) { return seoPathMatch(sp, d); });
-        html += seoCheck('Disallow: ' + sp, ok, ok ? null : 'Not disallowed — search results may be crawled');
-      });
+    // Search path coverage — check that the actual current search path is disallowed
+    if (isSearch && pagePath) {
+      var searchDisallowed = parsed.disallows.some(function(d) { return seoPathMatch(pagePath, d); });
+      html += seoCheck(
+        'Search path disallowed <code class="seo-code">' + pagePath + '</code>',
+        searchDisallowed,
+        searchDisallowed ? null : 'Search results page is not blocked — search results may be crawled'
+      );
     }
 
     // Current page crawlability — LN/SC/LPC pages should be crawlable (not disallowed)
